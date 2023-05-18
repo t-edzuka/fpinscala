@@ -30,7 +30,7 @@ object RNG:
 
   def boolean(rng: RNG): (Boolean, RNG) =
     rng.nextInt match
-      case (i,rng2) => (i%2==0,rng2)
+      case (i, rng2) => (i % 2 == 0, rng2)
 
   def intDouble(rng: RNG): ((Int, Double), RNG) =
     val (i, r1) = rng.nextInt
@@ -56,7 +56,7 @@ object RNG:
     if count <= 0 then
       (List(), rng)
     else
-      val (x, r1)  = rng.nextInt
+      val (x, r1) = rng.nextInt
       val (xs, r2) = ints(count - 1)(r1)
       (x :: xs, r2)
 
@@ -68,6 +68,7 @@ object RNG:
       else
         val (x, r2) = r.nextInt
         go(count - 1, r2, x :: xs)
+
     go(count, rng, List())
 
   type Rand[+A] = RNG => (A, RNG)
@@ -77,7 +78,7 @@ object RNG:
   def unit[A](a: A): Rand[A] =
     rng => (a, rng)
 
-  def map[A,B](s: Rand[A])(f: A => B): Rand[B] =
+  def map[A, B](s: Rand[A])(f: A => B): Rand[B] =
     rng =>
       val (a, rng2) = s(rng)
       (f(a), rng2)
@@ -99,7 +100,7 @@ object RNG:
       val (b, rng2) = rb(rng1)
       (f(a, b), rng2)
 
-  def both[A,B](ra: Rand[A], rb: Rand[B]): Rand[(A,B)] =
+  def both[A, B](ra: Rand[A], rb: Rand[B]): Rand[(A, B)] =
     map2(ra, rb)((_, _))
 
   val randIntDouble: Rand[(Int, Double)] =
@@ -135,7 +136,7 @@ object RNG:
   def nonNegativeLessThan(n: Int): Rand[Int] =
     flatMap(nonNegativeInt): i =>
       val mod = i % n
-      if i + (n-1) - mod >= 0 then unit(mod) else nonNegativeLessThan(n)
+      if i + (n - 1) - mod >= 0 then unit(mod) else nonNegativeLessThan(n)
 
   def mapViaFlatMap[A, B](r: Rand[A])(f: A => B): Rand[B] =
     flatMap(r)(a => unit(f(a)))
@@ -146,7 +147,7 @@ object RNG:
 opaque type State[S, +A] = S => (A, S)
 
 object State:
-  extension [S, A](underlying: State[S, A])
+  extension[S, A] (underlying: State[S, A])
     def run(s: S): (A, S) = underlying(s)
 
     def map[B](f: A => B): State[S, B] =
@@ -158,7 +159,7 @@ object State:
         b <- sb
       yield f(a, b)
 
-    def flatMap[B](f: A => State[S, B]): State[S, B] = 
+    def flatMap[B](f: A => State[S, B]): State[S, B] =
       s =>
         val (a, s1) = underlying(s)
         f(a)(s1)
@@ -190,13 +191,13 @@ enum Input:
 case class Machine(locked: Boolean, candies: Int, coins: Int)
 
 object Candy:
-  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = 
+  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] =
     for
       _ <- State.traverse(inputs)(i => State.modify(update(i)))
       s <- State.get
     yield (s.coins, s.candies)
 
-  val update = (i: Input) => (s: Machine) =>
+  val update: Input => Machine => Machine = (i: Input) => (s: Machine) =>
     (i, s) match
       case (_, Machine(_, 0, _)) => s
       case (Input.Coin, Machine(false, _, _)) => s
